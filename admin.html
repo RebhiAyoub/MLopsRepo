@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin – Retrain Uber Model</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+        }
+        button {
+            padding: 12px 20px;
+            background: black;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #444;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 10px;
+            background: #f3f3f3;
+            border-radius: 5px;
+        }
+        #loading {
+            display: none;
+            color: blue;
+            font-weight: bold;
+        }
+        label { display: block; margin-top: 10px; }
+        input { width: 100%; padding: 8px; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Admin Panel – Retrain Model</h1>
+
+    <label>N estimators</label>
+    <input id="n_estimators" type="number" value="100">
+
+    <label>Max depth (leave empty for None)</label>
+    <input id="max_depth" type="number">
+
+    <label>Min samples split</label>
+    <input id="min_samples_split" type="number" value="2">
+
+    <label>Test size</label>
+    <input id="test_size" type="number" value="0.2" step="0.01">
+
+    <button onclick="retrainModel()">Retrain Model</button>
+
+    <p id="loading">⏳ Retraining model... please wait (5–20 sec)</p>
+
+    <div id="result"></div>
+</div>
+
+<script>
+    async function retrainModel() {
+        document.getElementById("loading").style.display = "block";
+        document.getElementById("result").innerHTML = "";
+
+        const payload = {
+            n_estimators: parseInt(document.getElementById("n_estimators").value),
+            max_depth: document.getElementById("max_depth").value === "" ?
+                null : parseInt(document.getElementById("max_depth").value),
+            min_samples_split: parseInt(document.getElementById("min_samples_split").value),
+            test_size: parseFloat(document.getElementById("test_size").value)
+        };
+
+        try {
+            const response = await fetch("http://127.0.0.1:8000/retrain", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+
+            document.getElementById("loading").style.display = "none";
+
+            if (response.ok) {
+                document.getElementById("result").innerHTML = `
+                    <h3>Retrain Complete</h3>
+                    <p><b>Message:</b> ${data.message}</p>
+                    <p><b>RMSE:</b> ${data.RMSE}</p>
+                    <p><b>R²:</b> ${data.R2}</p>
+                `;
+            } else {
+                document.getElementById("result").innerHTML = "<b>Error:</b> " + JSON.stringify(data);
+            }
+        }
+        catch (err) {
+            document.getElementById("loading").style.display = "none";
+            document.getElementById("result").innerHTML = "<b>Request failed:</b> " + err;
+        }
+    }
+</script>
+
+</body>
+</html>
