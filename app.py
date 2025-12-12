@@ -8,7 +8,9 @@ from datetime import datetime
 import os
 
 from load_model import load_model
-from model_pipeline import prepare  # your feature engineering
+from data_engineering import prepare
+
+#from model_pipeline import prepare  # your feature engineering
 
 
 app = FastAPI(title="Uber Fare Prediction API")
@@ -128,6 +130,7 @@ def predict_fare(ride: RideInput):
 
 
 # Retrain endpoint
+"""
 @app.post("/retrain")
 def retrain_model(req: RetrainRequest):
     from loading_data import load_data
@@ -205,3 +208,4 @@ def retrain_model(req: RetrainRequest):
         "RMSE": float(metrics["RMSE"]),
         "R2": float(metrics["R2"])
     }
+"""

@@ -76,3 +76,40 @@ clean:
 	@echo "🧹 Cleaning..."
 	@rm -f $(PREPARED_DATA) $(MODEL)
 	@echo "✨ Clean complete!"
+
+# 7. DOCKER AUTOMATION
+
+DOCKER_IMAGE_LOCAL = ayoubrebhi/ayoub_rebhi_4ds1_mlops
+DOCKER_IMAGE_HUB   = ayoubrebhi/ayoubrebhi_mlops
+DOCKER_TAG         = latest
+CONTAINER_NAME     = uber_api_container
+
+# Build Docker image
+docker-build:
+	@echo "🐳 Building Docker image..."
+	docker build -t $(DOCKER_IMAGE_LOCAL):$(DOCKER_TAG) .
+
+# Run container
+docker-run:
+	@echo "🚀 Running Docker container on port 8000..."
+	docker run -d --name $(CONTAINER_NAME) -p 8000:8000 $(DOCKER_IMAGE_LOCAL):$(DOCKER_TAG)
+
+# Stop container
+docker-stop:
+	@echo "🛑 Stopping Docker container..."
+	-docker stop $(CONTAINER_NAME)
+	-docker rm $(CONTAINER_NAME)
+
+# Tag image for Docker Hub
+docker-tag:
+	@echo "🏷️ Tagging image for Docker Hub..."
+	docker tag $(DOCKER_IMAGE_LOCAL):$(DOCKER_TAG) $(DOCKER_IMAGE_HUB):$(DOCKER_TAG)
+
+# Push to Docker Hub
+docker-push: docker-tag
+	@echo "📤 Pushing image to Docker Hub..."
+	docker push $(DOCKER_IMAGE_HUB):$(DOCKER_TAG)
+
+# Full deployment pipeline: build → tag → push → run
+docker-deploy: docker-build docker-push docker-run
+	@echo "🚀 Deployment complete!"

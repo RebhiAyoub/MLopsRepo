@@ -2,88 +2,310 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Uber Fare Prediction</title>
+    <title>Uber Fare Predictor</title>
+
+    <!-- Leaflet map CSS -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+
     <style>
         body {
-            font-family: Arial, sans-serif;
-            max-width: 500px;
-            margin: 40px auto;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #000000, #1a1a2e, #16213e);
+            color: #e5e7eb;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
             padding: 20px;
-            background: #f3f3f3;
-            border-radius: 10px;
         }
-        h2 { text-align: center; }
-        input, button {
+        .card {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 32px 36px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 1px rgba(255,255,255,0.1) inset;
+            width: 460px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        h1 {
+            font-size: 1.8rem;
+            margin-top: 0;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #00d4ff, #00ffa3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 0.85rem;
+            margin-bottom: 24px;
+        }
+        .input-group {
+            margin-bottom: 16px;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #cbd5e1;
+        }
+        input {
             width: 100%;
-            padding: 12px;
-            margin-top: 10px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
+            padding: 12px 14px;
+            border-radius: 10px;
+            border: 1px solid rgba(100, 116, 139, 0.3);
+            background: rgba(30, 41, 59, 0.5);
+            color: #e5e7eb;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+        input:focus {
+            outline: none;
+            border-color: #00d4ff;
+            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+            background: rgba(30, 41, 59, 0.8);
         }
         button {
-            background: black;
-            color: white;
+            margin-top: 24px;
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: none;
+            background: linear-gradient(135deg, #00d4ff, #00ffa3);
+            color: #000;
+            font-weight: 700;
             cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         button:hover {
-            background: #333;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
         }
-        #result {
+        button:active {
+            transform: translateY(0);
+        }
+        .result {
             margin-top: 20px;
-            font-size: 20px;
+            padding: 16px;
+            border-radius: 12px;
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            font-size: 1rem;
             text-align: center;
-            font-weight: bold;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .result.success {
+            background: rgba(0, 255, 163, 0.05);
+            border-color: rgba(0, 255, 163, 0.3);
+            color: #00ffa3;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+        .error {
+            color: #f97373;
+        }
+        small {
+            display: block;
+            margin-top: 4px;
+            font-size: 0.75rem;
+            color: #9ca3af;
+        }
+        #map {
+            height: 260px;
+            border-radius: 14px;
+            margin-top: 8px;
+            border: 1px solid rgba(100, 116, 139, 0.5);
+            overflow: hidden;
+        }
+        .map-legend {
+            font-size: 0.8rem;
+            color: #9ca3af;
+            margin-top: 6px;
         }
     </style>
+
+    <!-- Leaflet map JS -->
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+    </script>
 </head>
 <body>
+<div class="card">
+    <h1>Uber Fare Predictor</h1>
+    <div class="subtitle">AI-powered ride cost estimation</div>
 
-    <h2>Uber Fare Prediction</h2>
+    <div class="input-group">
+        <label for="datetime">Pickup datetime</label>
+        <input id="datetime" type="datetime-local">
+        <small>Example: 2013-01-01 08:00</small>
+    </div>
 
-    <label>Pickup Datetime:</label>
-    <input type="datetime-local" id="pickup_datetime">
+    <div class="input-group">
+        <label>Pick locations on the map</label>
+        <div id="map"></div>
+        <div class="map-legend">
+            Click once for <b>pickup</b> (green pin), click again for <b>dropoff</b> (red pin).  
+            Click a third time to reset both pins.
+        </div>
+    </div>
 
-    <label>Pickup Longitude:</label>
-    <input type="number" step="0.000001" id="pickup_longitude">
+    <!-- Hidden inputs to store coordinates -->
+    <input id="pickup_lon" type="hidden">
+    <input id="pickup_lat" type="hidden">
+    <input id="dropoff_lon" type="hidden">
+    <input id="dropoff_lat" type="hidden">
 
-    <label>Pickup Latitude:</label>
-    <input type="number" step="0.000001" id="pickup_latitude">
+    <div class="input-group">
+        <label for="passengers">Passenger count</label>
+        <input id="passengers" type="number" min="1" max="6" value="1">
+    </div>
 
-    <label>Dropoff Longitude:</label>
-    <input type="number" step="0.000001" id="dropoff_longitude">
+    <button onclick="sendPrediction()">Predict fare</button>
 
-    <label>Dropoff Latitude:</label>
-    <input type="number" step="0.000001" id="dropoff_latitude">
+    <div id="output" class="result">Enter ride details and click "Predict fare".</div>
+</div>
 
-    <label>Passenger Count:</label>
-    <input type="number" id="passenger_count">
+<script>
+let map;
+let pickupMarker = null;
+let dropoffMarker = null;
 
-    <button onclick="predict()">Predict Fare</button>
+function initMap() {
+    map = L.map('map').setView([40.758, -73.985], 12); // center on NYC
 
-    <div id="result"></div>
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
 
-    <script>
-        async function predict() {
-            let data = {
-                pickup_datetime: document.getElementById("pickup_datetime").value,
-                pickup_longitude: Number(document.getElementById("pickup_longitude").value),
-                pickup_latitude: Number(document.getElementById("pickup_latitude").value),
-                dropoff_longitude: Number(document.getElementById("dropoff_longitude").value),
-                dropoff_latitude: Number(document.getElementById("dropoff_latitude").value),
-                passenger_count: Number(document.getElementById("passenger_count").value)
-            };
+    map.on('click', onMapClick);
+}
 
-            const response = await fetch("http://127.0.0.1:8000/predict", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data)
-            });
+function onMapClick(e) {
+    const lat = e.latlng.lat;
+    const lon = e.latlng.lng;
 
-            const result = await response.json();
-            document.getElementById("result").innerHTML =
-                "Predicted Fare: $" + result.predicted_fare.toFixed(2);
+    const pickupLonInput = document.getElementById("pickup_lon");
+    const pickupLatInput = document.getElementById("pickup_lat");
+    const dropoffLonInput = document.getElementById("dropoff_lon");
+    const dropoffLatInput = document.getElementById("dropoff_lat");
+
+    if (!pickupMarker) {
+        // First click: pickup
+        pickupMarker = L.marker([lat, lon], {title: "Pickup"})
+            .addTo(map)
+            .bindPopup("Pickup").openPopup();
+
+        pickupLatInput.value = lat.toFixed(6);
+        pickupLonInput.value = lon.toFixed(6);
+    } else if (!dropoffMarker) {
+        // Second click: dropoff
+        const redIcon = L.icon({
+            iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+            shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41],
+            className: "dropoff-marker"
+        });
+
+        dropoffMarker = L.marker([lat, lon], {title: "Dropoff", icon: redIcon})
+            .addTo(map)
+            .bindPopup("Dropoff").openPopup();
+
+        dropoffLatInput.value = lat.toFixed(6);
+        dropoffLonInput.value = lon.toFixed(6);
+    } else {
+        // Third click: reset both
+        map.removeLayer(pickupMarker);
+        map.removeLayer(dropoffMarker);
+        pickupMarker = null;
+        dropoffMarker = null;
+        pickupLonInput.value = "";
+        pickupLatInput.value = "";
+        dropoffLonInput.value = "";
+        dropoffLatInput.value = "";
+    }
+}
+
+async function sendPrediction() {
+    const out = document.getElementById("output");
+    out.classList.remove("error");
+    out.classList.remove("success");
+    out.textContent = "Predicting...";
+
+    const dt = document.getElementById("datetime").value;
+    if (!dt) {
+        out.classList.add("error");
+        out.textContent = "Please choose a pickup datetime.";
+        return;
+    }
+
+    const pickupLon = document.getElementById("pickup_lon").value;
+    const pickupLat = document.getElementById("pickup_lat").value;
+    const dropoffLon = document.getElementById("dropoff_lon").value;
+    const dropoffLat = document.getElementById("dropoff_lat").value;
+
+    if (!pickupLon || !pickupLat || !dropoffLon || !dropoffLat) {
+        out.classList.add("error");
+        out.textContent = "Please click on the map to set pickup and dropoff points.";
+        return;
+    }
+
+    const isoDatetime = new Date(dt).toISOString();
+
+    const payload = {
+        pickup_datetime: isoDatetime,
+        pickup_longitude: parseFloat(pickupLon),
+        pickup_latitude: parseFloat(pickupLat),
+        dropoff_longitude: parseFloat(dropoffLon),
+        dropoff_latitude: parseFloat(dropoffLat),
+        passenger_count: parseInt(document.getElementById("passengers").value)
+    };
+
+    try {
+        const response = await fetch("http://127.0.0.1:8090/predict", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const err = await response.json();
+            out.classList.add("error");
+            out.textContent = "Error: " + (err.detail || response.statusText);
+            return;
         }
-    </script>
 
+        const data = await response.json();
+        const fare = data.predicted_fare.toFixed(2);
+        out.classList.add("success");
+        out.textContent = `$${fare}`;
+    } catch (e) {
+        out.classList.add("error");
+        out.textContent = "Network error: " + e;
+    }
+}
+
+// Initialize map after page loads
+window.addEventListener("load", initMap);
+</script>
 </body>
 </html>
